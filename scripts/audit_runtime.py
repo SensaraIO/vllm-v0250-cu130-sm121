@@ -26,6 +26,19 @@ def main() -> int:
 
     actual = {name: version(name) for name in EXPECTED}
     failures: list[str] = []
+    try:
+        stale_jit_cache = version("flashinfer-jit-cache")
+    except md.PackageNotFoundError:
+        stale_jit_cache = None
+    else:
+        failures.append(
+            f"stale flashinfer-jit-cache must be absent, found {stale_jit_cache}"
+        )
+    try:
+        importlib.import_module("torchcodec")
+        importlib.import_module("flashinfer")
+    except Exception as exc:
+        failures.append(f"runtime dependency import failed: {type(exc).__name__}: {exc}")
     for name, expected in EXPECTED.items():
         if actual[name] != expected:
             failures.append(f"{name}: expected {expected}, got {actual[name]}")
@@ -72,6 +85,7 @@ def main() -> int:
         "status": "FAIL" if failures else "PASS",
         "vllm_api_version": vllm.__version__,
         "packages": actual,
+        "flashinfer_jit_cache": stale_jit_cache,
         "torch": torch.__version__,
         "torch_cuda": torch.version.cuda,
         "extensions": extensions,

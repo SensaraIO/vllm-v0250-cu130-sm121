@@ -54,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && \
 RUN rm -rf /usr/local/lib/python3.12/dist-packages/vllm /usr/local/lib/python3.12/dist-packages/vllm-* /usr/local/bin/vllm
 COPY --from=builder /usr/local/lib/python3.12/dist-packages/ /usr/local/lib/python3.12/dist-packages/
 COPY --from=builder /usr/local/bin/vllm /usr/local/bin/vllm
+RUN python3 -m pip uninstall -y flashinfer-jit-cache && \
+    python3 -c "import flashinfer; print('flashinfer import passed', flashinfer.__version__)"
 ENV MAX_JOBS=6 \
     NVCC_THREADS=2 \
     FLASHINFER_NVCC_THREADS=2 \
@@ -78,6 +80,12 @@ assert vllm.__version__ == "0.25.0", vllm.__version__
 assert m.version("vllm") == "0.25.0", m.version("vllm")
 assert torch.__version__.startswith("2.11.0+cu130"), torch.__version__
 assert m.version("flashinfer-python") == "0.6.13"
+try:
+    m.version("flashinfer-jit-cache")
+except m.PackageNotFoundError:
+    pass
+else:
+    raise AssertionError("stale flashinfer-jit-cache must be absent")
 assert m.version("nvidia-cutlass-dsl") == "4.5.2"
 assert m.version("nvidia-nccl-cu13") == "2.28.9"
 print("runtime audit passed", vllm.__version__, torch.__version__, torch.version.cuda)
