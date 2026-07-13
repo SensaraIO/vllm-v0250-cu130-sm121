@@ -63,7 +63,12 @@ ARG VLLM_COMMIT=702f4814fe54fabff350d43cb753ae3e47c0c276
 LABEL org.opencontainers.image.title="vLLM v0.25.0 CUDA13 ARM64 SM121" \
       org.opencontainers.image.version="0.25.0" \
       org.opencontainers.image.revision="${VLLM_COMMIT}" \
-      org.opencontainers.image.source="https://github.com/vllm-project/vllm"
+      org.opencontainers.image.source="https://github.com/r0b0tlab/vllm-v0250-cu130-sm121" \
+      org.opencontainers.image.url="https://github.com/r0b0tlab/vllm-v0250-cu130-sm121" \
+      org.opencontainers.image.vendor="r0b0tlab" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      io.r0b0tlab.upstream.source="https://github.com/vllm-project/vllm" \
+      io.r0b0tlab.upstream.revision="${VLLM_COMMIT}"
 RUN python3 - <<'PY'
 import importlib.metadata as m
 import torch, vllm
