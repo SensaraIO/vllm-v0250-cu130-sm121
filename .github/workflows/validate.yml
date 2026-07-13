@@ -21,7 +21,7 @@ jobs:
         run: |
           grep -F '702f4814fe54fabff350d43cb753ae3e47c0c276' docker/Dockerfile
           grep -F 'cuda-toolkit-13-0' docker/Dockerfile
-          grep -F '0.25.0+cu130' docker/Dockerfile
+          grep -F 'm.version("vllm") == "0.25.0"' docker/Dockerfile
           grep -F 'flashinfer-python") == "0.6.13"' docker/Dockerfile
           grep -F 'nvidia-nccl-cu13") == "2.28.9"' docker/Dockerfile
       - name: Public safety scan

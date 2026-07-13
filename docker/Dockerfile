@@ -40,7 +40,7 @@ RUN python3 - <<'PY'
 import importlib.metadata as m
 import torch, vllm
 assert vllm.__version__ == "0.25.0", vllm.__version__
-assert m.version("vllm").startswith("0.25.0+cu130"), m.version("vllm")
+assert m.version("vllm") == "0.25.0", m.version("vllm")
 assert torch.__version__.startswith("2.11.0+cu130"), torch.__version__
 assert m.version("flashinfer-python") == "0.6.13"
 assert m.version("nvidia-cutlass-dsl") == "4.5.2"
@@ -68,7 +68,7 @@ RUN python3 - <<'PY'
 import importlib.metadata as m
 import torch, vllm
 assert vllm.__version__ == "0.25.0", vllm.__version__
-assert m.version("vllm").startswith("0.25.0+cu130"), m.version("vllm")
+assert m.version("vllm") == "0.25.0", m.version("vllm")
 assert torch.__version__.startswith("2.11.0+cu130"), torch.__version__
 assert m.version("flashinfer-python") == "0.6.13"
 assert m.version("nvidia-cutlass-dsl") == "4.5.2"

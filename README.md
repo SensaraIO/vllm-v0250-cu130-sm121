@@ -16,7 +16,7 @@ The moving `latest` tag is updated only after the immutable image passes depende
 
 The upstream v0.25.0 release does not publish an ARM64 CUDA-13.0 image. Installing a generic wheel can replace SM121-native extensions or compile against a CUDA toolkit newer than Torch's runtime. This build fails closed unless:
 
-- vLLM reports `0.25.0+cu130`;
+- vLLM reports upstream release version `0.25.0` and the independent compiler audit reports CUDA 13.0;
 - Torch reports `2.11.0+cu130`;
 - active `nvcc` reports CUDA 13.0;
 - FlashInfer is 0.6.13;

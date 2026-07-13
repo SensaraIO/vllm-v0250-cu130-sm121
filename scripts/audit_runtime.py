@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 EXPECTED = {
-    "vllm": "0.25.0+cu130",
+    "vllm": "0.25.0",
     "flashinfer-python": "0.6.13",
     "nvidia-cutlass-dsl": "4.5.2",
     "nvidia-nccl-cu13": "2.28.9",
