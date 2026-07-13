@@ -7,10 +7,12 @@ This repository builds the upstream [vLLM v0.25.0](https://github.com/vllm-proje
 ## Image
 
 ```bash
-docker pull ghcr.io/r0b0tlab/vllm-v0250-cu130-sm121:v0.25.0-cu130-sm121-arm64-702f4814
+docker pull ghcr.io/r0b0tlab/vllm-v0250-cu130-sm121:v0.25.0-cu130-sm121-arm64-702f4814-r2
 ```
 
-The moving `latest` tag is updated only after the immutable image passes dependency, extension, SM121 GPU, and serving smoke tests.
+Registry digest: `sha256:a13c9964937f398b66d4a7e4fb8f80be8a60327052ca50bc8fbc2ce40c36beae`.
+
+The moving `latest` tag currently resolves to this immutable revision. The image passes dependency, extension, TorchCodec/FFmpeg, CLI-import, and SM121 GPU audits; model-level serving remains a deployment-specific gate.
 
 ## Why a source build?
 
@@ -20,6 +22,8 @@ The upstream v0.25.0 release does not publish an ARM64 CUDA-13.0 image. Installi
 - Torch reports `2.11.0+cu130`;
 - active `nvcc` reports CUDA 13.0;
 - FlashInfer is 0.6.13;
+- the incompatible inherited `flashinfer-jit-cache` 0.6.12 package is absent;
+- TorchCodec can load its FFmpeg shared-library dependencies;
 - CUTLASS DSL is 4.5.2;
 - NCCL is 2.28.9;
 - compute capability is 12.1 at runtime.
@@ -51,6 +55,8 @@ For a validated multi-node DGX Spark RoCE topology:
 
 - keep rendezvous/Gloo socket coordination on management Ethernet;
 - select rank-local RoCE HCAs with `NCCL_IB_HCA`;
+- explicitly expose `/dev/infiniband/rdma_cm` and the required `uverbs` devices to unprivileged containers;
+- pin the validated RoCEv2 GID with `NCCL_IB_GID_INDEX` rather than relying on automatic selection when a host exposes several GID entries;
 - use `NCCL_IB_SUBNET_AWARE_ROUTING=1` and `NCCL_IB_MERGE_NICS=0` where validated;
 - do not force MNNVL without NVSwitch multicast;
 - do not enable NCCL symmetric memory on SM121.
