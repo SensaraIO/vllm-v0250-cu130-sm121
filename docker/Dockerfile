@@ -49,6 +49,8 @@ print("builder audit passed", vllm.__version__, torch.__version__)
 PY
 
 FROM cuda130base AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 RUN rm -rf /usr/local/lib/python3.12/dist-packages/vllm /usr/local/lib/python3.12/dist-packages/vllm-* /usr/local/bin/vllm
 COPY --from=builder /usr/local/lib/python3.12/dist-packages/ /usr/local/lib/python3.12/dist-packages/
 COPY --from=builder /usr/local/bin/vllm /usr/local/bin/vllm
@@ -80,6 +82,7 @@ assert m.version("nvidia-cutlass-dsl") == "4.5.2"
 assert m.version("nvidia-nccl-cu13") == "2.28.9"
 print("runtime audit passed", vllm.__version__, torch.__version__, torch.version.cuda)
 PY
+RUN python3 -c "import torchcodec; from torchcodec.decoders import VideoDecoder; print('torchcodec import passed')"
 COPY scripts/audit_runtime.py /opt/r0b0tlab/audit_runtime.py
 RUN chmod 0755 /opt/r0b0tlab/audit_runtime.py
 ENTRYPOINT ["vllm"]
