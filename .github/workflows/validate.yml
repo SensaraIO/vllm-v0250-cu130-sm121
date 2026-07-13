@@ -1,0 +1,29 @@
+name: Validate release files
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile audit script
+        run: python -m py_compile scripts/audit_runtime.py
+      - name: Verify release pins
+        run: |
+          grep -F '702f4814fe54fabff350d43cb753ae3e47c0c276' docker/Dockerfile
+          grep -F 'cuda-toolkit-13-0' docker/Dockerfile
+          grep -F '0.25.0+cu130' docker/Dockerfile
+          grep -F 'flashinfer-python") == "0.6.13"' docker/Dockerfile
+          grep -F 'nvidia-nccl-cu13") == "2.28.9"' docker/Dockerfile
+      - name: Public safety scan
+        run: |
+          ! grep -RInE '/home/|192\.168\.|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|GITHUB_TOKEN|HF_TOKEN|password=' . --exclude-dir=.git --exclude=validate.yml
