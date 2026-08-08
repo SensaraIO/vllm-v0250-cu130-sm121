@@ -106,27 +106,36 @@ def main() -> int:
     if "release 13.0" not in nvcc:
         failures.append("active CUDA compiler is not release 13.0")
 
-    extensions = {}
-    for module in ("vllm._C_stable_libtorch", "vllm._moe_C_stable_libtorch"):
-        try:
-            importlib.import_module(module)
-            extensions[module] = "PASS"
-        except Exception as exc:
-            extensions[module] = f"FAIL: {type(exc).__name__}: {exc}"
-            failures.append(f"extension import failed: {module}")
-
     gpu = None
-    if not arguments.no_gpu and torch.cuda.is_available():
-        capability = torch.cuda.get_device_capability()
-        gpu = {"name": torch.cuda.get_device_name(), "capability": capability}
-        if capability != (12, 1):
-            failures.append(f"GPU capability: expected (12, 1), got {capability}")
-        x = torch.randn((512, 512), device="cuda", dtype=torch.bfloat16)
-        y = x @ x
-        torch.cuda.synchronize()
-        gpu["bf16_matmul_finite"] = bool(torch.isfinite(y).all().item())
-        if not gpu["bf16_matmul_finite"]:
-            failures.append("CUDA BF16 matmul produced non-finite output")
+    extension_modules = (
+        "vllm._C_stable_libtorch",
+        "vllm._moe_C_stable_libtorch",
+    )
+    if arguments.no_gpu:
+        extensions = {module: "SKIP: --no-gpu" for module in extension_modules}
+    else:
+        extensions = {}
+        for module in extension_modules:
+            try:
+                importlib.import_module(module)
+                extensions[module] = "PASS"
+            except Exception as exc:
+                extensions[module] = f"FAIL: {type(exc).__name__}: {exc}"
+                failures.append(f"extension import failed: {module}")
+
+        if not torch.cuda.is_available():
+            failures.append("CUDA is unavailable for the required GPU audit")
+        else:
+            capability = torch.cuda.get_device_capability()
+            gpu = {"name": torch.cuda.get_device_name(), "capability": capability}
+            if capability != (12, 1):
+                failures.append(f"GPU capability: expected (12, 1), got {capability}")
+            x = torch.randn((512, 512), device="cuda", dtype=torch.bfloat16)
+            y = x @ x
+            torch.cuda.synchronize()
+            gpu["bf16_matmul_finite"] = bool(torch.isfinite(y).all().item())
+            if not gpu["bf16_matmul_finite"]:
+                failures.append("CUDA BF16 matmul produced non-finite output")
 
     report = {
         "status": "FAIL" if failures else "PASS",
