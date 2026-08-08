@@ -16,13 +16,34 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile audit script
-        run: python -m py_compile scripts/audit_runtime.py
+        run: |
+          python -m py_compile scripts/audit_runtime.py
+          python -m py_compile scripts/apply_flashinfer_0614_backport.py
+      - name: Verify Sensara FlashInfer backport pins
+        run: |
+          grep -F '702f4814fe54fabff350d43cb753ae3e47c0c276' docker/Dockerfile
+          grep -F 'ba47bb5be1bf8e263e978178f0ee453dbc9fa9b6' docker/Dockerfile
+          grep -F 'flashinfer-python @ https://files.pythonhosted.org/' docker/flashinfer-0.6.14-requirements.txt
+          grep -F 'd124369346a3d48eac67e31c42f7a3c813bcc0abc10e2e36db413b7b3dfd97df' docker/flashinfer-0.6.14-requirements.txt
+          grep -F '7bbed9f3851b59f3f6f6cb344810775bbce8a1c012ecf9a502bebd91cfb6433e' docker/flashinfer-0.6.14-requirements.txt
+          grep -F 'c54c356db35107354deb05b6f40cc2b0c830034f6035efcb267dcfcd090249fd' docker/flashinfer-0.6.14-requirements.txt
+          grep -F 'd49e2cf1c4a7cacd7afef7b7019af336ad260cf28379b778209446053ecbb449' scripts/apply_flashinfer_0614_backport.py
+          grep -F '22abed27e57862b3eea0b50986b7dee6bf1ba8727bf68f3895a1d98085115324' scripts/apply_flashinfer_0614_backport.py
+          grep -F '731a9e7d0dc7de94f45150fd211bbfdab9043f9c5c96ed896d9d955c6661db4d' scripts/apply_flashinfer_0614_backport.py
+          grep -F 'ac16aa6cbe82c4c6d329ee0b05f11b7d8b91faff65ef687f40993d57fc099b2c' scripts/apply_flashinfer_0614_backport.py
+          grep -F '48d8e0f74cf15dc0a18ee660198e08919619e1f60cceefa23b51eb4693bb9034' scripts/apply_flashinfer_0614_backport.py
+          grep -F 'b85c8db81c559e712ed814d7a08cbd3800e1c83b0a3ae30b525140096fc05ee9' scripts/apply_flashinfer_0614_backport.py
+          grep -F 'swa_topk_lens' scripts/audit_runtime.py
+          grep -F 'extra_sparse_indices' scripts/audit_runtime.py
+          grep -F 'extra_sparse_topk_lens' scripts/audit_runtime.py
       - name: Verify release pins
         run: |
           grep -F '702f4814fe54fabff350d43cb753ae3e47c0c276' docker/Dockerfile
           grep -F 'cuda-toolkit-13-0' docker/Dockerfile
-          grep -F 'm.version("vllm") == "0.25.0"' docker/Dockerfile
-          grep -F 'flashinfer-python") == "0.6.13"' docker/Dockerfile
+          grep -F '0.25.0+sensara.fi0614.1' docker/Dockerfile scripts/audit_runtime.py
+          grep -F 'flashinfer-python") == "0.6.14"' docker/Dockerfile
+          grep -F 'flashinfer-cubin") == "0.6.14"' docker/Dockerfile
+          grep -F 'flashinfer-jit-cache") == "0.6.14+cu130"' docker/Dockerfile
           grep -F 'nvidia-nccl-cu13") == "2.28.9"' docker/Dockerfile
       - name: Public safety scan
         run: |

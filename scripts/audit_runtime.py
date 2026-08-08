@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
-"""Fail-closed runtime audit for r0b0tlab vLLM v0.25.0 SM121 image."""
+"""Fail-closed runtime audit for the Sensara FlashInfer 0.6.14 overlay."""
 from __future__ import annotations
 
+import argparse
 import importlib
 import importlib.metadata as md
+import inspect
 import json
 import subprocess
 import sys
 
 EXPECTED = {
-    "vllm": "0.25.0",
-    "flashinfer-python": "0.6.13",
+    "vllm": "0.25.0+sensara.fi0614.1",
+    "flashinfer-python": "0.6.14",
+    "flashinfer-cubin": "0.6.14",
+    "flashinfer-jit-cache": "0.6.14+cu130",
     "nvidia-cutlass-dsl": "4.5.2",
     "nvidia-nccl-cu13": "2.28.9",
+}
+
+REQUIRED_DSV4_PARAMETERS = {
+    "swa_topk_lens",
+    "extra_sparse_indices",
+    "extra_sparse_topk_lens",
 }
 
 
@@ -20,20 +30,35 @@ def version(name: str) -> str:
     return md.version(name)
 
 
+def normalized_name(name: str) -> str:
+    return name.lower().replace("_", "-").replace(".", "-")
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-gpu", action="store_true")
+    arguments = parser.parse_args()
+
     import torch
     import vllm
 
     actual = {name: version(name) for name in EXPECTED}
     failures: list[str] = []
-    try:
-        stale_jit_cache = version("flashinfer-jit-cache")
-    except md.PackageNotFoundError:
-        stale_jit_cache = None
-    else:
-        failures.append(
-            f"stale flashinfer-jit-cache must be absent, found {stale_jit_cache}"
-        )
+    dsv4_parameters: list[str] | None = None
+    installed_versions: dict[str, list[str]] = {}
+    for distribution in md.distributions():
+        name = distribution.metadata.get("Name")
+        if name is None:
+            continue
+        canonical = normalized_name(name)
+        if canonical in EXPECTED:
+            installed_versions.setdefault(canonical, []).append(distribution.version)
+    for name, expected in EXPECTED.items():
+        observed = sorted(installed_versions.get(name, []))
+        if observed != [expected]:
+            failures.append(
+                f"{name}: expected exactly one {expected} distribution, got {observed}"
+            )
     try:
         importlib.import_module("torchcodec")
         importlib.import_module("flashinfer")
@@ -49,6 +74,26 @@ def main() -> int:
         failures.append(f"torch: expected 2.11.0+cu130, got {torch.__version__}")
     if torch.version.cuda != "13.0":
         failures.append(f"torch CUDA runtime: expected 13.0, got {torch.version.cuda}")
+
+    try:
+        from flashinfer.decode import trtllm_batch_decode_sparse_mla_dsv4
+
+        dsv4_parameters = sorted(
+            inspect.signature(
+                trtllm_batch_decode_sparse_mla_dsv4
+            ).parameters
+        )
+        missing = REQUIRED_DSV4_PARAMETERS - set(dsv4_parameters)
+        if missing:
+            failures.append(
+                "FlashInfer DSv4 sparse-MLA API missing: "
+                + ", ".join(sorted(missing))
+            )
+    except Exception as exc:
+        failures.append(
+            "FlashInfer DSv4 sparse-MLA signature probe failed: "
+            f"{type(exc).__name__}: {exc}"
+        )
 
     nvcc = subprocess.run(
         ["/usr/local/cuda-13.0/bin/nvcc", "--version"],
@@ -69,7 +114,7 @@ def main() -> int:
             failures.append(f"extension import failed: {module}")
 
     gpu = None
-    if torch.cuda.is_available():
+    if not arguments.no_gpu and torch.cuda.is_available():
         capability = torch.cuda.get_device_capability()
         gpu = {"name": torch.cuda.get_device_name(), "capability": capability}
         if capability != (12, 1):
@@ -85,13 +130,13 @@ def main() -> int:
         "status": "FAIL" if failures else "PASS",
         "vllm_api_version": vllm.__version__,
         "packages": actual,
-        "flashinfer_jit_cache": stale_jit_cache,
+        "flashinfer_dsv4_parameters": dsv4_parameters,
         "torch": torch.__version__,
         "torch_cuda": torch.version.cuda,
         "extensions": extensions,
         "gpu": gpu,
         "failures": failures,
-        "provenance": "r0b0tlab-vllm-v0250-cu130-sm121",
+        "provenance": "sensara-vllm-v0250-fi0614-cu130-sm121",
     }
     print(json.dumps(report, indent=2, default=list))
     return 1 if failures else 0

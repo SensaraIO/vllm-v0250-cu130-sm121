@@ -1,0 +1,6 @@
+flashinfer-python @ https://files.pythonhosted.org/packages/f2/8f/b101913cb2b3687654f56681cfe9836d447526be663c149966470ef70531/flashinfer_python-0.6.14-py3-none-any.whl \
+    --hash=sha256:d124369346a3d48eac67e31c42f7a3c813bcc0abc10e2e36db413b7b3dfd97df
+flashinfer-cubin @ https://github.com/flashinfer-ai/flashinfer/releases/download/v0.6.14/flashinfer_cubin-0.6.14-py3-none-any.whl \
+    --hash=sha256:7bbed9f3851b59f3f6f6cb344810775bbce8a1c012ecf9a502bebd91cfb6433e
+flashinfer-jit-cache @ https://github.com/flashinfer-ai/flashinfer/releases/download/v0.6.14/flashinfer_jit_cache-0.6.14%2Bcu130-cp39-abi3-manylinux_2_28_aarch64.whl \
+    --hash=sha256:c54c356db35107354deb05b6f40cc2b0c830034f6035efcb267dcfcd090249fd

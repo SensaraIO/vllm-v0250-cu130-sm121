@@ -2,6 +2,36 @@
 
 Reproducible source-built vLLM runtime for NVIDIA GB10 / DGX Spark.
 
+## Sensara FlashInfer 0.6.14 source rebuild
+
+This fork rebuilds the exact vLLM 0.25.0 source at
+`702f4814fe54fabff350d43cb753ae3e47c0c276` with a narrow reviewed backport.
+The resulting distribution is versioned `0.25.0+sensara.fi0614.1`; it requires
+the matched FlashInfer 0.6.14 Python, cubin, and CUDA-13.0 JIT-cache
+distributions and includes only the CuTeDSL subscription compatibility change
+from upstream vLLM commit
+`ba47bb5be1bf8e263e978178f0ee453dbc9fa9b6`.
+
+All three wheels are installed from exact URLs with reviewed SHA-256 hashes.
+The build fails unless all three patched upstream files have their exact base
+and reviewed output digests, the installed vLLM metadata requires FlashInfer
+0.6.14, every package has exactly one installed distribution, and the resulting
+`trtllm_batch_decode_sparse_mla_dsv4` callable exposes the three parameters
+required by the pinned DeepSeek V4 SM121 caller.
+
+```bash
+docker build --platform linux/arm64 --progress=plain \
+  --build-arg SOURCE_REVISION="$(git rev-parse HEAD)" \
+  -f docker/Dockerfile \
+  -t vllm-v0250-cu130-sm121:fi0614 .
+
+docker run --rm --gpus all --entrypoint /opt/sensara/audit_runtime.py \
+  vllm-v0250-cu130-sm121:fi0614
+```
+
+The GPU audit is necessary but not sufficient: the two-rank model boot and
+OpenAI-compatible conformance gate remain mandatory before promotion.
+
 This repository builds the upstream [vLLM v0.25.0](https://github.com/vllm-project/vllm/releases/tag/v0.25.0) release at commit `702f4814fe54fabff350d43cb753ae3e47c0c276`, targeting ARM64 and compute capability 12.1 with the CUDA 13.0 toolkit used by Torch `2.11.0+cu130`.
 
 ## Image
