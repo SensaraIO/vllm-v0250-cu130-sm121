@@ -41,10 +41,13 @@ jobs:
           grep -F '702f4814fe54fabff350d43cb753ae3e47c0c276' docker/Dockerfile
           grep -F 'cuda-toolkit-13-0' docker/Dockerfile
           grep -F '0.25.0+sensara.fi0614.1' docker/Dockerfile scripts/audit_runtime.py
+          grep -F 'vllm.__version__ != EXPECTED["vllm"]' scripts/audit_runtime.py
           grep -F 'flashinfer-python") == "0.6.14"' docker/Dockerfile
           grep -F 'flashinfer-cubin") == "0.6.14"' docker/Dockerfile
           grep -F 'flashinfer-jit-cache") == "0.6.14+cu130"' docker/Dockerfile
           grep -F 'nvidia-nccl-cu13") == "2.28.9"' docker/Dockerfile
+          ! grep -F '/opt/sensara/audit_runtime.py' README.md
+          ! grep -F 'FlashInfer is 0.6.13' README.md
       - name: Public safety scan
         run: |
           ! grep -RInE '/home/|192\.168\.|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|GITHUB_TOKEN|HF_TOKEN|password=' . --exclude-dir=.git --exclude=validate.yml

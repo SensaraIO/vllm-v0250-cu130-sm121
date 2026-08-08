@@ -68,8 +68,10 @@ def main() -> int:
         if actual[name] != expected:
             failures.append(f"{name}: expected {expected}, got {actual[name]}")
 
-    if vllm.__version__ != "0.25.0":
-        failures.append(f"vllm.__version__: expected 0.25.0, got {vllm.__version__}")
+    if vllm.__version__ != EXPECTED["vllm"]:
+        failures.append(
+            f"vllm.__version__: expected {EXPECTED['vllm']}, got {vllm.__version__}"
+        )
     if not torch.__version__.startswith("2.11.0+cu130"):
         failures.append(f"torch: expected 2.11.0+cu130, got {torch.__version__}")
     if torch.version.cuda != "13.0":

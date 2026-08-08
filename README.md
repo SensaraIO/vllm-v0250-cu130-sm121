@@ -25,7 +25,7 @@ docker build --platform linux/arm64 --progress=plain \
   -f docker/Dockerfile \
   -t vllm-v0250-cu130-sm121:fi0614 .
 
-docker run --rm --gpus all --entrypoint /opt/sensara/audit_runtime.py \
+docker run --rm --gpus all --entrypoint /opt/r0b0tlab/audit_runtime.py \
   vllm-v0250-cu130-sm121:fi0614
 ```
 
@@ -34,7 +34,7 @@ OpenAI-compatible conformance gate remain mandatory before promotion.
 
 This repository builds the upstream [vLLM v0.25.0](https://github.com/vllm-project/vllm/releases/tag/v0.25.0) release at commit `702f4814fe54fabff350d43cb753ae3e47c0c276`, targeting ARM64 and compute capability 12.1 with the CUDA 13.0 toolkit used by Torch `2.11.0+cu130`.
 
-## Image
+## Prior image (do not deploy for DeepSeek V4)
 
 ```bash
 docker pull ghcr.io/r0b0tlab/vllm-v0250-cu130-sm121:v0.25.0-cu130-sm121-arm64-702f4814-r2
@@ -42,17 +42,20 @@ docker pull ghcr.io/r0b0tlab/vllm-v0250-cu130-sm121:v0.25.0-cu130-sm121-arm64-70
 
 Registry digest: `sha256:a13c9964937f398b66d4a7e4fb8f80be8a60327052ca50bc8fbc2ce40c36beae`.
 
-The moving `latest` tag currently resolves to this immutable revision. The image passes dependency, extension, TorchCodec/FFmpeg, CLI-import, and SM121 GPU audits; model-level serving remains a deployment-specific gate.
+That predecessor contains FlashInfer 0.6.13 and is incompatible with the pinned
+DeepSeek V4 caller. It is listed only for provenance; this branch must be built,
+audited, and published under a new immutable digest before deployment. Do not
+use the moving `latest` tag.
 
 ## Why a source build?
 
 The upstream v0.25.0 release does not publish an ARM64 CUDA-13.0 image. Installing a generic wheel can replace SM121-native extensions or compile against a CUDA toolkit newer than Torch's runtime. This build fails closed unless:
 
-- vLLM reports upstream release version `0.25.0` and the independent compiler audit reports CUDA 13.0;
+- vLLM reports the rebuilt distribution version `0.25.0+sensara.fi0614.1` and the independent compiler audit reports CUDA 13.0;
 - Torch reports `2.11.0+cu130`;
 - active `nvcc` reports CUDA 13.0;
-- FlashInfer is 0.6.13;
-- the incompatible inherited `flashinfer-jit-cache` 0.6.12 package is absent;
+- FlashInfer Python and cubin distributions are exactly 0.6.14;
+- the CUDA-13.0 `flashinfer-jit-cache` distribution is exactly `0.6.14+cu130`, with no duplicate inherited FlashInfer distributions;
 - TorchCodec can load its FFmpeg shared-library dependencies;
 - CUTLASS DSL is 4.5.2;
 - NCCL is 2.28.9;
@@ -62,6 +65,7 @@ The upstream v0.25.0 release does not publish an ARM64 CUDA-13.0 image. Installi
 
 ```bash
 docker build --progress=plain \
+  --build-arg SOURCE_REVISION="$(git rev-parse HEAD)" \
   -f docker/Dockerfile \
   -t vllm-v0250-cu130-sm121:local .
 ```
