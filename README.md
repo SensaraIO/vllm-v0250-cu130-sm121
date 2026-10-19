@@ -47,6 +47,15 @@ docker run --rm --gpus all \
   /opt/r0b0tlab/audit_runtime.py
 ```
 
+## Checks
+
+Run the release-file checks locally before pushing; there is no hosted CI (GitHub Actions is off):
+
+```bash
+scripts/ci-local.sh        # compile the audit script, verify the release pins, public safety scan
+scripts/ci-local.sh fast   # the same checks
+```
+
 ## Distributed GB10 notes
 
 v0.25.0 includes blocking CUDA events for V1/V2 async-copy paths, avoiding driver-lock busy polling under tensor-parallel collective contention ([vLLM #47081](https://github.com/vllm-project/vllm/pull/47081)).
